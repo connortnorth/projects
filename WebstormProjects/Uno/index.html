@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uno Table - Complete Action Rules</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a4d2e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #245c3a;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .section {
+            background-color: rgba(0,0,0,0.25);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .hand {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 130px;
+            align-items: center;
+        }
+
+        .play-area {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin: 25px 0;
+            align-items: center;
+        }
+
+        .deck-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .deck-section p {
+            margin: 8px 0 0 0;
+        }
+
+        /* Card Styling */
+        .card {
+            width: 80px;
+            height: 120px;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+            user-select: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.6);
+        }
+
+        .card-inner {
+            border: 3px solid white;
+            border-radius: 6px;
+            height: calc(100% - 8px);
+            width: calc(100% - 8px);
+            margin: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            box-sizing: border-box;
+            text-align: center;
+            word-break: break-word;
+            padding: 4px;
+        }
+
+        /* Computer Hidden Cards */
+        .card.back {
+            background-color: #95a5a6;
+            cursor: default;
+        }
+        .card.back:hover {
+            transform: none;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+        }
+        .card.back .card-inner {
+            background: radial-gradient(circle, #e74c3c 0%, #c0392b 70%);
+            font-style: italic;
+            font-size: 1.2rem;
+        }
+
+        #status-message {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background-color: #11351e;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 5px solid #3498db;
+        }
+
+        /* Color Picker Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.75);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background-color: #2c3e50;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            border: 2px solid white;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+        }
+
+        .color-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .color-btn {
+            width: 70px;
+            height: 70px;
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h2>Uno Singleplayer</h2>
+    <button class="btn" onclick="initGame()">Restart Game</button>
+
+    <div class="section">
+        <h3>Computer's Hand (<span id="computer-count">0</span> cards)</h3>
+        <div id="computer-hand" class="hand"></div>
+    </div>
+
+    <div class="play-area">
+        <div class="deck-section">
+            <div class="card back" id="main-deck" onclick="playerDrawAction()">
+                <div class="card-inner">DECK</div>
+            </div>
+        </div>
+
+        <div class="deck-section">
+            <div id="discard-card"></div>
+            <p>Active Match: <span id="current-color-indicator"></span></p>
+        </div>
+    </div>
+
+    <div id="status-message">Game starting...</div>
+
+    <div class="section">
+        <h3>Your Hand</h3>
+        <div id="player-hand" class="hand"></div>
+    </div>
+</div>
+
+<div id="color-picker" class="modal">
+    <div class="modal-content">
+        <h3>Select a New Match Color:</h3>
+        <div class="color-buttons">
+            <button class="color-btn" onclick="selectColor('red')" style="background-color: #ff5555;"></button>
+            <button class="color-btn" onclick="selectColor('blue')" style="background-color: #5555ff;"></button>
+            <button class="color-btn" onclick="selectColor('green')" style="background-color: #55aa55;"></button>
+            <button class="color-btn" onclick="selectColor('yellow')" style="background-color: #ffaa00;"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Game Engine Variables
+    let deck = [];
+    let discardPile = [];
+    let playerHand = [];
+    let computerHand = [];
+    let currentColor = '';
+    let currentValue = '';
+    let currentTurn = 'player';
+    let gameActive = false;
+    let lastPlayedWildDraw4 = false;
+
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+
+    function getCardColorHex(colorName) {
+        switch(colorName) {
+            case 'red': return '#ff5555';
+            case 'blue': return '#5555ff';
+            case 'green': return '#55aa55';
+            case 'yellow': return '#ffaa00';
+            case 'wild': return '#222222';
+            default: return '#222222';
+        }
+    }
+
+    // Generate full functional Uno deck
+    function createDeck() {
+        deck = [];
+        for (let color of colors) {
+            for (let value of values) {
+                deck.push({ color: color, value: value });
+                if (value !== '0') {
+                    deck.push({ color: color, value: value });
+                }
+            }
+        }
+        // Add Wild Cards & Wild Draw 4s
+        for (let i = 0; i < 4; i++) {
+            deck.push({ color: 'wild', value: 'Wild' });
+            deck.push({ color: 'wild', value: 'Draw 4' });
+        }
+    }
+
+    function shuffleDeck() {
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+
+    function initGame() {
+        createDeck();
+        shuffleDeck();
+
+        playerHand = [];
+        computerHand = [];
+        discardPile = [];
+        lastPlayedWildDraw4 = false;
+
+        // Deal hands
+        for (let i = 0; i < 7; i++) {
+            playerHand.push(deck.pop());
+            computerHand.push(deck.pop());
+        }
+
+        // Draw clean numerical starting card
+        let startCardIndex = deck.findIndex(c => c.color !== 'wild' && c.value !== 'Skip' && c.value !== 'Reverse' && c.value !== 'Draw 2');
+        let firstCard = deck.splice(startCardIndex, 1)[0];
+        discardPile.push(firstCard);
+
+        currentColor = firstCard.color;
+        currentValue = firstCard.value;
+
+        currentTurn = 'player';
+        gameActive = true;
+        updateStatus("Your turn! Match by color or value. Click deck to auto-draw.");
+        renderBoard();
+    }
+
+    function updateStatus(msg) {
+        document.getElementById('status-message').innerText = msg;
+    }
+
+    function drawCard(hand) {
+        if (deck.length === 0) {
+            let topCard = discardPile.pop();
+            deck = [...discardPile];
+            shuffleDeck();
+            discardPile = [topCard];
+        }
+        let card = deck.pop();
+        hand.push(card);
+        return card;
+    }
+
+    function isValidMove(card) {
+        if (card.color === 'wild') return true;
+        return card.color === currentColor || card.value === currentValue;
+    }
+
+    // Automated draw handler for the human player
+    function playerDrawAction() {
+        if (currentTurn !== 'player' || !gameActive) return;
+
+        // Check if player already has a playable card before letting them draw
+        let hasPlayable = playerHand.some(card => isValidMove(card));
+        if (hasPlayable) {
+            updateStatus("You have playable cards in your hand! You must play one.");
+            return;
+        }
+
+        let drawn = drawCard(playerHand);
+
+        if (isValidMove(drawn)) {
+            updateStatus(`You automatically drew and played: ${drawn.color === 'wild' ? '' : drawn.color} ${drawn.value}!`);
+            // Auto play the card
+            let drawnIndex = playerHand.length - 1;
+            playerPlayCard(drawnIndex);
+        } else {
+            updateStatus(`You drew ${drawn.color === 'wild' ? '' : drawn.color} ${drawn.value}, which can't be played. Turning over to computer...`);
+            currentTurn = 'computer';
+            renderBoard();
+            executeComputerAI();
+        }
+    }
+
+    function playerPlayCard(index) {
+        if (currentTurn !== 'player' || !gameActive) return;
+
+        let card = playerHand[index];
+        if (!isValidMove(card)) {
+            updateStatus("Invalid Move! Card must match the color or action value.");
+            return;
+        }
+
+        playerHand.splice(index, 1);
+        discardPile.push(card);
+
+        if (card.color !== 'wild') {
+            currentColor = card.color;
+            currentValue = card.value;
+            if (checkWinCondition(playerHand, 'You')) return;
+            processSpecialActions(card, true);
+        } else {
+            currentValue = card.value;
+            lastPlayedWildDraw4 = (card.value === 'Draw 4');
+            if (checkWinCondition(playerHand, 'You')) return;
+            document.getElementById('color-picker').style.display = 'flex';
+        }
+        renderBoard();
+    }
+
+    function selectColor(colorChosen) {
+        currentColor = colorChosen;
+        document.getElementById('color-picker').style.display = 'none';
+
+        if (lastPlayedWildDraw4) {
+            updateStatus(`You played a Wild Draw 4! Computer draws 4 and skips a turn. You go again!`);
+            drawCard(computerHand); drawCard(computerHand); drawCard(computerHand); drawCard(computerHand);
+            lastPlayedWildDraw4 = false;
+            currentTurn = 'player';
+        } else {
+            updateStatus(`You declared color: ${colorChosen.toUpperCase()}! Computer's turn.`);
+            currentTurn = 'computer';
+            executeComputerAI();
+        }
+        renderBoard();
+    }
+
+    // Logic framework for Special modifiers (Skip, Reverse, Draw 2, Draw 4)
+    function processSpecialActions(card, isPlayerAction) {
+        let opponentName = isPlayerAction ? 'Computer' : 'You';
+        let activeParty = isPlayerAction ? 'You' : 'Computer';
+        let victimHand = isPlayerAction ? computerHand : playerHand;
+
+        if (card.value === 'Skip' || card.value === 'Reverse') {
+            // In a 1v1 match, playing a Reverse acts identical to a Skip card.
+            updateStatus(`${activeParty} played a ${card.value}! ${opponentName} is skipped. Play again.`);
+            currentTurn = isPlayerAction ? 'player' : 'computer';
+            if (currentTurn === 'computer') executeComputerAI();
+        } else if (card.value === 'Draw 2') {
+            drawCard(victimHand);
+            drawCard(victimHand);
+            updateStatus(`${activeParty} dropped a Draw 2! ${opponentName} draws 2 and is skipped.`);
+            currentTurn = isPlayerAction ? 'player' : 'computer';
+            if (currentTurn === 'computer') executeComputerAI();
+        } else {
+            currentTurn = isPlayerAction ? 'computer' : 'player';
+            if (currentTurn === 'computer') executeComputerAI();
+        }
+    }
+
+    // Computer AI Intelligence
+    function executeComputerAI() {
+        if (!gameActive || currentTurn !== 'computer') return;
+
+        updateStatus("Computer is evaluating its hand...");
+
+        setTimeout(() => {
+            let matchIndex = computerHand.findIndex(card => isValidMove(card));
+
+            if (matchIndex !== -1) {
+                playComputerCard(matchIndex);
+            } else {
+                // Automate drawn card logic for Computer
+                updateStatus("Computer has no match. Pulling card from Deck...");
+                let drawn = drawCard(computerHand);
+
+                if (isValidMove(drawn)) {
+                    setTimeout(() => {
+                        let drawnIndex = computerHand.length - 1;
+                        playComputerCard(drawnIndex);
+                    }, 1200);
+                } else {
+                    updateStatus("Computer drew a card, couldn't play it, and passed turn back to you.");
+                    currentTurn = 'player';
+                    renderBoard();
+                }
+            }
+        }, 1500);
+    }
+
+    function playComputerCard(index) {
+        let card = computerHand.splice(index, 1)[0];
+        discardPile.push(card);
+
+        if (card.color === 'wild') {
+            // Pick color AI holds the most of
+            let tallies = { red: 0, blue: 0, green: 0, yellow: 0 };
+            computerHand.forEach(c => { if(c.color !== 'wild') tallies[c.color]++; });
+            let aiChosenColor = Object.keys(tallies).reduce((a, b) => tallies[a] > tallies[b] ? a : b);
+
+            currentColor = aiChosenColor;
+            currentValue = card.value;
+
+            if (card.value === 'Draw 4') {
+                updateStatus(`Computer dropped a Wild Draw 4! Color set to ${aiChosenColor.toUpperCase()}. You draw 4 and skip!`);
+                drawCard(playerHand); drawCard(playerHand); drawCard(playerHand); drawCard(playerHand);
+                if (checkWinCondition(computerHand, 'Computer')) return;
+                currentTurn = 'computer'; // Computer goes again
+                executeComputerAI();
+            } else {
+                updateStatus(`Computer dropped a Wild card and set color to: ${aiChosenColor.toUpperCase()}!`);
+                if (checkWinCondition(computerHand, 'Computer')) return;
+                currentTurn = 'player';
+            }
+        } else {
+            currentColor = card.color;
+            currentValue = card.value;
+            updateStatus(`Computer played: ${card.color} ${card.value}.`);
+
+            if (checkWinCondition(computerHand, 'Computer')) return;
+            processSpecialActions(card, false);
+        }
+        renderBoard();
+    }
+
+    function checkWinCondition(hand, partyName) {
+        if (hand.length === 0) {
+            gameActive = false;
+            updateStatus(`${partyName} won the match! Press Restart to play again.`);
+            alert(`${partyName} secure(s) the victory!`);
+            return true;
+        }
+        return false;
+    }
+
+    function renderBoard() {
+        // Render Player Hand
+        const pHandDiv = document.getElementById('player-hand');
+        pHandDiv.innerHTML = '';
+        playerHand.forEach((card, i) => {
+            let cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.style.backgroundColor = getCardColorHex(card.color);
+            cardEl.onclick = () => playerPlayCard(i);
+
+            let inner = document.createElement('div');
+            inner.className = 'card-inner';
+            inner.innerText = card.value;
+            cardEl.appendChild(inner);
+            pHandDiv.appendChild(cardEl);
+        });
+
+        // Render Computer Hand
+        const cHandDiv = document.getElementById('computer-hand');
+        cHandDiv.innerHTML = '';
+        document.getElementById('computer-count').innerText = computerHand.length;
+        computerHand.forEach(() => {
+            let cardEl = document.createElement('div');
+            cardEl.className = 'card back';
+            let inner = document.createElement('div');
+            inner.className = 'card-inner';
+            inner.innerText = 'UNO';
+            cardEl.appendChild(inner);
+            cHandDiv.appendChild(cardEl);
+        });
+
+        // Render Top Discard Stack
+        const discardDiv = document.getElementById('discard-card');
+        discardDiv.innerHTML = '';
+        if (discardPile.length > 0) {
+            let topCard = discardPile[discardPile.length - 1];
+            let cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.style.backgroundColor = getCardColorHex(topCard.color === 'wild' ? currentColor : topCard.color);
+            cardEl.style.cursor = 'default';
+            cardEl.style.transform = 'none';
+
+            let inner = document.createElement('div');
+            inner.className = 'card-inner';
+            inner.innerText = topCard.value;
+            cardEl.appendChild(inner);
+            discardDiv.appendChild(cardEl);
+        }
+
+        // Match Indicator Coloration
+        const indicator = document.getElementById('current-color-indicator');
+        indicator.innerText = currentColor.toUpperCase();
+        indicator.style.color = getCardColorHex(currentColor);
+    }
+
+    window.onload = initGame;
+</script>
+</body>
+</html>
